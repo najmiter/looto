@@ -71,7 +71,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 transition-colors duration-200 flex flex-col">
       <header className="bg-white dark:bg-dark-800 shadow-sm border-b border-gray-200 dark:border-dark-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -157,7 +157,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700 p-6">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
@@ -235,6 +235,25 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+      <footer>
+        <div className="bg-white dark:bg-dark-800 border-t border-gray-200 dark:border-dark-700 py-6">
+          <div className="max-w-7xl space-y-2.5 mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-dark-500 dark:text-dark-300">
+            <p>
+              &copy; {new Date().getFullYear()} Knoctal. All rights reserved.
+            </p>
+            <p>
+              Made with ❤️ by{' '}
+              <a
+                target="_blank"
+                href="https://www.knoctal.com/"
+                className="text-violet-600 dark:text-violet-400 hover:underline"
+              >
+                Knoctal
+              </a>
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

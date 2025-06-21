@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { validateLottie } from '../utils/lottieValidator';
 import { handleError } from '../utils/errorHandler';
 import VisualEditor from './VisualEditor';
-import './Editor.css';
 
 interface EditorProps {
   lottieData: object | null;
@@ -48,41 +47,71 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
   }, [lottieData]);
 
   return (
-    <div className="editor-container">
-      <div className="editor-tabs">
-        <button
-          className={`tab-button ${activeTab === 'visual' ? 'active' : ''}`}
-          onClick={() => setActiveTab('visual')}
-        >
-          Visual Editor
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'json' ? 'active' : ''}`}
-          onClick={() => setActiveTab('json')}
-        >
-          JSON Editor
-        </button>
+    <div className="h-full">
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl">
+        <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('visual')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'visual'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300'
+            }`}
+          >
+            Visual Editor
+          </button>
+          <button
+            onClick={() => setActiveTab('json')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'json'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300'
+            }`}
+          >
+            JSON Editor
+          </button>
+        </nav>
       </div>
 
-      {activeTab === 'visual' ? (
-        <VisualEditor lottieData={lottieData} onChange={onChange} />
-      ) : (
-        <div className="json-editor">
-          <h2>Edit Lottie JSON</h2>
-          <textarea
-            value={jsonInput}
-            onChange={handleInputChange}
-            rows={20}
-            cols={80}
-            placeholder="Paste your Lottie JSON here"
-            className="json-textarea"
-          />
-          {errorMessage && <div className="error">{errorMessage}</div>}
-          <button onClick={handleSave} className="save-button">
-            Save JSON
-          </button>
-        </div>
-      )}
+      {/* Tab Content */}
+      <div className="p-6">
+        {activeTab === 'visual' ? (
+          <VisualEditor lottieData={lottieData} onChange={onChange} />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Edit JSON
+              </h3>
+              <button
+                onClick={handleSave}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+
+            <div className="relative">
+              <textarea
+                value={jsonInput}
+                onChange={handleInputChange}
+                rows={20}
+                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                placeholder="Paste your Lottie JSON here..."
+              />
+            </div>
+
+            {errorMessage && (
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-red-600 dark:text-red-400 text-sm">
+                  {errorMessage}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

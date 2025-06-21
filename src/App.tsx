@@ -11,17 +11,26 @@ const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches;
-    setIsDarkMode(prefersDark);
+    const theme = localStorage.getItem('theme');
+    if (theme === null) {
+      const prefersDark = window.matchMedia(
+        '(prefers-color-scheme: dark)'
+      ).matches;
+      setIsDarkMode(prefersDark);
 
-    document.documentElement.classList.toggle('dark', prefersDark);
+      document.documentElement.classList.toggle('dark', prefersDark);
+    } else {
+      const parsedTheme = JSON.parse(theme);
+      setIsDarkMode(parsedTheme === 'dark');
+      document.documentElement.classList.toggle('dark', parsedTheme === 'dark');
+    }
   }, []);
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
+    const theme = newDarkMode ? 'dark' : 'light';
     setIsDarkMode(newDarkMode);
+    localStorage.setItem('theme', JSON.stringify(theme));
     document.documentElement.classList.toggle('dark', newDarkMode);
   };
 
@@ -46,13 +55,12 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+      <header className="bg-white dark:bg-dark-800 shadow-sm border-b border-gray-200 dark:border-dark-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-700 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">L</span>
               </div>
               <div>
@@ -67,7 +75,7 @@ const App: React.FC = () => {
 
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? (
@@ -97,9 +105,8 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Upload Section */}
         <div className="mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700 p-6">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
               Upload Lottie Animation
             </h2>
@@ -112,23 +119,20 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         {lottieData ? (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            {/* Editor Section */}
             <div className="xl:col-span-2">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700">
                 <Editor lottieData={lottieData} onChange={handleLottieChange} />
               </div>
             </div>
 
-            {/* Preview Section */}
             <div className="xl:col-span-1">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-8">
+              <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700 p-6 sticky top-8">
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                   Preview
                 </h3>
-                <div className="aspect-square bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                <div className="aspect-square bg-gray-50 dark:bg-dark-700 rounded-lg border border-gray-200 dark:border-dark-600 flex items-center justify-center">
                   <Preview lottieData={lottieData} />
                 </div>
                 <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
@@ -139,7 +143,7 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-24 h-24 bg-gray-100 dark:bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
                 className="w-12 h-12 text-gray-400"
                 fill="none"

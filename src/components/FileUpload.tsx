@@ -66,8 +66,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
           relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
           ${
             isDragOver
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+              ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
+              : 'border-gray-300 dark:border-dark-600 hover:border-gray-400 dark:hover:border-dark-500'
           }
         `}
         onDragOver={handleDragOver}
@@ -84,7 +84,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
         />
 
         <div className="space-y-3">
-          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 bg-gray-100 dark:bg-dark-700 rounded-full flex items-center justify-center mx-auto">
             <svg
               className="w-8 h-8 text-gray-400"
               fill="none"
@@ -103,7 +103,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
           <div>
             <p className="text-gray-700 dark:text-gray-300 font-medium">
               Drop your Lottie file here, or{' '}
-              <span className="text-blue-600 dark:text-blue-400 font-semibold">
+              <span className="text-violet-600 dark:text-violet-400 font-semibold">
                 browse
               </span>
             </p>

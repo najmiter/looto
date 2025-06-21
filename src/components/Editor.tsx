@@ -39,7 +39,6 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
     }
   };
 
-  // Update JSON input when lottieData changes
   React.useEffect(() => {
     if (lottieData) {
       setJsonInput(JSON.stringify(lottieData, null, 2));
@@ -48,14 +47,13 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
 
   return (
     <div className="h-full">
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-xl">
+      <div className="border-b border-gray-200 dark:border-dark-600 bg-white dark:bg-dark-800 rounded-t-xl">
         <nav className="flex space-x-8 px-6" aria-label="Tabs">
           <button
             onClick={() => setActiveTab('visual')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'visual'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300'
             }`}
           >
@@ -65,7 +63,7 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
             onClick={() => setActiveTab('json')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'json'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300'
             }`}
           >
@@ -74,7 +72,6 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
         </nav>
       </div>
 
-      {/* Tab Content */}
       <div className="p-6">
         {activeTab === 'visual' ? (
           <VisualEditor lottieData={lottieData} onChange={onChange} />
@@ -86,7 +83,7 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
               </h3>
               <button
                 onClick={handleSave}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
               >
                 Save Changes
               </button>
@@ -97,7 +94,7 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
                 value={jsonInput}
                 onChange={handleInputChange}
                 rows={20}
-                className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm p-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="block w-full rounded-lg border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-700 text-gray-900 dark:text-gray-100 font-mono text-sm p-4 focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
                 placeholder="Paste your Lottie JSON here..."
               />
             </div>

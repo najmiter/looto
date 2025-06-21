@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 
-const FileUpload: React.FC<{ onFileUpload: (file: object) => void }> = ({
-  onFileUpload,
-}) => {
+interface FileUploadProps {
+  onFileUpload: (jsonData: object) => void;
+}
+
+const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

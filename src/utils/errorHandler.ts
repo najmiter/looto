@@ -1,5 +1,4 @@
-export const handleError = (error: Error): void => {
-  const errorMessage = error.message || 'An unknown error occurred.';
+export const handleError = (errorMessage: string): void => {
   console.error(errorMessage);
   alert(errorMessage);
 };

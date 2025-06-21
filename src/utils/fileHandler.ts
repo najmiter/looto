@@ -1,8 +1,8 @@
-import { LottieData } from '@/types/lottie';
+import type { LottieAnimation } from '../types/lottie';
 
 export const readLottieFile = async (
   file: File
-): Promise<LottieData | null> => {
+): Promise<LottieAnimation | null> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -21,7 +21,7 @@ export const readLottieFile = async (
 };
 
 export const writeLottieFile = async (
-  data: LottieData,
+  data: LottieAnimation,
   filename: string
 ): Promise<void> => {
   const blob = new Blob([JSON.stringify(data, null, 2)], {

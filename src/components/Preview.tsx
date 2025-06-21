@@ -2,27 +2,27 @@ import React, { useEffect, useRef } from 'react';
 import lottie from 'lottie-web';
 
 interface PreviewProps {
-  jsonData: object | null;
+  lottieData: object | null;
 }
 
-const Preview: React.FC<PreviewProps> = ({ jsonData }) => {
+const Preview: React.FC<PreviewProps> = ({ lottieData }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (containerRef.current && jsonData) {
+    if (containerRef.current && lottieData) {
       const animation = lottie.loadAnimation({
         container: containerRef.current,
         renderer: 'svg',
         loop: true,
         autoplay: true,
-        animationData: jsonData,
+        animationData: lottieData,
       });
 
       return () => {
         animation.destroy();
       };
     }
-  }, [jsonData]);
+  }, [lottieData]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 };

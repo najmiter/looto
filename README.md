@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="/public/lottie-editor.svg" alt="Looto Logo" width="200"/>
+</div>
+
 # Lottie Editor App
 
 This project is a web application designed to edit Lottie JSON files. It provides a user-friendly interface for uploading, editing, and previewing Lottie animations in real-time.

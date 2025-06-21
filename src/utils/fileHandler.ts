@@ -1,0 +1,35 @@
+import { LottieData } from '@/types/lottie';
+
+export const readLottieFile = async (
+  file: File
+): Promise<LottieData | null> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        resolve(json);
+      } catch (error) {
+        reject(new Error('Failed to parse Lottie JSON file.'));
+      }
+    };
+    reader.onerror = () => {
+      reject(new Error('Failed to read the file.'));
+    };
+    reader.readAsText(file);
+  });
+};
+
+export const writeLottieFile = async (
+  data: LottieData,
+  filename: string
+): Promise<void> => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: 'application/json',
+  });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+};

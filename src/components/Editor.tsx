@@ -6,9 +6,10 @@ import VisualEditor from './VisualEditor';
 interface EditorProps {
   lottieData: object | null;
   onChange: (newData: object) => void;
+  onSave?: (data: object, filename: string) => void;
 }
 
-const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
+const Editor: React.FC<EditorProps> = ({ lottieData, onChange, onSave }) => {
   const [jsonInput, setJsonInput] = useState<string>(
     lottieData ? JSON.stringify(lottieData, null, 2) : ''
   );
@@ -32,7 +33,10 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
       }
       onChange(parsedJson);
       console.log('Lottie JSON saved:', parsedJson);
-    } catch (err) {
+      if (onSave) {
+        onSave(parsedJson, 'lottie.json');
+      }
+    } catch {
       const errorMsg = 'Invalid JSON format';
       setErrorMessage(errorMsg);
       handleError(errorMsg);
@@ -74,7 +78,11 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange }) => {
 
       <div className="p-6">
         {activeTab === 'visual' ? (
-          <VisualEditor lottieData={lottieData} onChange={onChange} />
+          <VisualEditor
+            lottieData={lottieData}
+            onChange={onChange}
+            onSave={onSave}
+          />
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">

@@ -46,12 +46,6 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
   ::-webkit-scrollbar-track {
     background-color: theme('colors.gray.800');
   }
@@ -70,4 +64,14 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: theme('colors.gray.500');
+}
+
+@layer utilities {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
 }

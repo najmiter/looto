@@ -1,29 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { validateLottie } from '../utils/lottieValidator';
 import { handleError } from '../utils/errorHandler';
 import VisualEditor from './VisualEditor';
 
 interface EditorProps {
   lottieData: object | null;
+  jsonString: string;
+  fileName: string;
   onChange: (newData: object) => void;
+  onJsonStringChange: (newJsonString: string) => void;
+  onFileNameChange: (newFileName: string) => void;
   onSave?: (data: object, filename: string) => void;
 }
 
-const Editor: React.FC<EditorProps> = ({ lottieData, onChange, onSave }) => {
-  const [jsonInput, setJsonInput] = useState<string>(
-    lottieData ? JSON.stringify(lottieData, null, 2) : ''
-  );
+const Editor: React.FC<EditorProps> = ({
+  lottieData,
+  jsonString,
+  fileName,
+  onChange,
+  onJsonStringChange,
+  onFileNameChange,
+  onSave,
+}) => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'visual' | 'json'>('visual');
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setJsonInput(event.target.value);
+    const newValue = event.target.value;
+    onJsonStringChange(newValue);
     setErrorMessage('');
   };
 
   const handleSave = () => {
     try {
-      const parsedJson = JSON.parse(jsonInput);
+      const parsedJson = JSON.parse(jsonString);
       const validationResults = validateLottie(parsedJson);
       if (!validationResults.isValid) {
         const errorMsg = validationResults.errors.join(', ');
@@ -34,7 +44,7 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange, onSave }) => {
       onChange(parsedJson);
       console.log('Lottie JSON saved:', parsedJson);
       if (onSave) {
-        onSave(parsedJson, 'lottie.json');
+        onSave(parsedJson, fileName);
       }
     } catch {
       const errorMsg = 'Invalid JSON format';
@@ -43,11 +53,10 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange, onSave }) => {
     }
   };
 
-  React.useEffect(() => {
-    if (lottieData) {
-      setJsonInput(JSON.stringify(lottieData, null, 2));
-    }
-  }, [lottieData]);
+  // Clear error message when switching tabs or when data changes successfully
+  useEffect(() => {
+    setErrorMessage('');
+  }, [activeTab, lottieData]);
 
   return (
     <div className="h-full">
@@ -80,26 +89,16 @@ const Editor: React.FC<EditorProps> = ({ lottieData, onChange, onSave }) => {
         {activeTab === 'visual' ? (
           <VisualEditor
             lottieData={lottieData}
+            fileName={fileName}
             onChange={onChange}
+            onFileNameChange={onFileNameChange}
             onSave={onSave}
           />
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Edit JSON
-              </h3>
-              <button
-                onClick={handleSave}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
-              >
-                Save Changes
-              </button>
-            </div>
-
             <div className="relative">
               <textarea
-                value={jsonInput}
+                value={jsonString}
                 onChange={handleInputChange}
                 rows={20}
                 className="block w-full rounded-lg border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-700 text-gray-900 dark:text-gray-100 font-mono text-sm p-4 focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"

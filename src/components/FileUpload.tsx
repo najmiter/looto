@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 
 interface FileUploadProps {
-  onFileUpload: (jsonData: object) => void;
+  onFileUpload: (jsonData: object, fileName?: string) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
@@ -9,19 +9,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const processFile = (file: File) => {
+  const handleFileRead = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const json = JSON.parse(e.target?.result as string);
-        onFileUpload(json);
-        setError(null);
-      } catch (err) {
-        setError('Invalid Lottie JSON file.');
+        const content = e.target?.result as string;
+        const jsonData = JSON.parse(content);
+        onFileUpload(jsonData, file.name);
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+        // Handle error appropriately
       }
-    };
-    reader.onerror = () => {
-      setError('Error reading file.');
     };
     reader.readAsText(file);
   };
@@ -29,7 +27,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      processFile(file);
+      handleFileRead(file);
     }
   };
 
@@ -49,7 +47,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
 
     const file = e.dataTransfer.files[0];
     if (file && file.type === 'application/json') {
-      processFile(file);
+      handleFileRead(file);
     } else {
       setError('Please drop a valid JSON file.');
     }

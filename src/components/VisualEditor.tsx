@@ -3,13 +3,17 @@ import type { LottieAnimation } from '../types/lottie';
 
 interface VisualEditorProps {
   lottieData: object | null;
+  fileName: string;
   onChange: (newData: object) => void;
+  onFileNameChange: (newFileName: string) => void;
   onSave?: (data: object, filename: string) => void;
 }
 
 const VisualEditor: React.FC<VisualEditorProps> = ({
   lottieData,
+  fileName,
   onChange,
+  onFileNameChange,
   onSave,
 }) => {
   const [animation, setAnimation] = useState<LottieAnimation | null>(null);
@@ -97,33 +101,6 @@ const VisualEditor: React.FC<VisualEditorProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-          Visual Lottie Editor
-        </h3>
-        {onSave && (
-          <button
-            onClick={() => onSave(animation!, 'edited-animation.json')}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
-          >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            Download JSON
-          </button>
-        )}
-      </div>
-
       <div className="bg-gray-50 dark:bg-dark-700/50 rounded-lg p-6">
         <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">
           Animation Properties

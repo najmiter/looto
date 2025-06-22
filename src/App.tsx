@@ -12,6 +12,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [fileName, setFileName] = useState<string>('animation.json');
+  const [jsonString, setJsonString] = useState<string>('');
 
   useEffect(() => {
     const theme = localStorage.getItem('theme');
@@ -37,11 +38,15 @@ const App: React.FC = () => {
     document.documentElement.classList.toggle('dark', newDarkMode);
   };
 
-  const handleFileUpload = (jsonData: object) => {
+  const handleFileUpload = (jsonData: object, uploadedFileName?: string) => {
     try {
       const validationResult = validateLottie(jsonData);
       if (validationResult.isValid) {
         setLottieData(jsonData);
+        setJsonString(JSON.stringify(jsonData, null, 2));
+        if (uploadedFileName) {
+          setFileName(uploadedFileName);
+        }
         setError('');
       } else {
         throw new Error(validationResult.errors.join(', '));
@@ -55,6 +60,24 @@ const App: React.FC = () => {
 
   const handleLottieChange = (newData: object) => {
     setLottieData(newData);
+    setJsonString(JSON.stringify(newData, null, 2));
+  };
+
+  const handleJsonStringChange = (newJsonString: string) => {
+    setJsonString(newJsonString);
+    try {
+      const parsedData = JSON.parse(newJsonString);
+      const validationResult = validateLottie(parsedData);
+      if (validationResult.isValid) {
+        setLottieData(parsedData);
+        setError('');
+      } else {
+        setError(validationResult.errors.join(', '));
+      }
+    } catch (err) {
+      // Don't update lottieData if JSON is invalid, but keep the string for editing
+      setError('Invalid JSON format');
+    }
   };
 
   const handleSaveFile = async () => {
@@ -189,7 +212,11 @@ const App: React.FC = () => {
               <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700">
                 <Editor
                   lottieData={lottieData}
+                  jsonString={jsonString}
+                  fileName={fileName}
                   onChange={handleLottieChange}
+                  onJsonStringChange={handleJsonStringChange}
+                  onFileNameChange={setFileName}
                   onSave={async (data, filename) => {
                     try {
                       await writeLottieFile(data as LottieAnimation, filename);

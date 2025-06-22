@@ -75,7 +75,6 @@ const App: React.FC = () => {
         setError(validationResult.errors.join(', '));
       }
     } catch (err) {
-      // Don't update lottieData if JSON is invalid, but keep the string for editing
       setError('Invalid JSON format');
     }
   };
@@ -103,12 +102,12 @@ const App: React.FC = () => {
                 src="/lottie-editor.svg"
                 width={40}
                 height={40}
-                alt="looto logo"
+                alt="lootie logo"
                 className="rounded-xl"
               />
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Looto
+                  Lootie
                 </h1>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Free Lottie Editor

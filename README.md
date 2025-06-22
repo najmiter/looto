@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/public/lottie-editor.svg" alt="Looto Logo" width="200"/>
+  <img src="/public/lottie-editor.svg" alt="Lootie Logo" width="200"/>
 </div>
 
 # Lottie Editor App

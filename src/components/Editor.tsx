@@ -1,26 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { validateLottie } from '../utils/lottieValidator';
-import { handleError } from '../utils/errorHandler';
 import VisualEditor from './VisualEditor';
-
-interface EditorProps {
-  lottieData: object | null;
-  jsonString: string;
-  fileName: string;
-  onChange: (newData: object) => void;
-  onJsonStringChange: (newJsonString: string) => void;
-  onFileNameChange: (newFileName: string) => void;
-  onSave?: (data: object, filename: string) => void;
-}
+import type { EditorProps } from '@/types';
 
 const Editor: React.FC<EditorProps> = ({
   lottieData,
   jsonString,
-  fileName,
   onChange,
   onJsonStringChange,
-  onFileNameChange,
-  onSave,
 }) => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'visual' | 'json'>('visual');

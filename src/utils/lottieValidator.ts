@@ -1,5 +1,3 @@
-import type { LottieAnimation } from '../types/lottie';
-
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
@@ -12,14 +10,12 @@ export const validateLottie = (data: any): ValidationResult => {
     return { isValid: false, errors: ['Invalid Lottie data'] };
   }
 
-  // Check required properties
   if (!data.v) errors.push('Missing version property');
   if (typeof data.fr !== 'number') errors.push('Invalid frame rate');
   if (typeof data.w !== 'number') errors.push('Invalid width');
   if (typeof data.h !== 'number') errors.push('Invalid height');
   if (!Array.isArray(data.layers)) errors.push('Invalid layers array');
 
-  // Validate layers
   if (data.layers) {
     data.layers.forEach((layer: any, index: number) => {
       if (typeof layer.ty !== 'number') {

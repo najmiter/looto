@@ -1,34 +1,33 @@
-// Lottie Animation types
 export interface Transform {
-  p: { k: number[] };
-  s: { k: number[] };
-  r?: { k: number };
-  o?: { k: number };
+  p: { k: number[] }; // position
+  s: { k: number[] }; // scale
+  r?: { k: number }; // rotation
+  o?: { k: number }; // opacity
 }
 
 export interface Layer {
-  ty: number;
-  nm?: string;
-  ip: number;
-  op: number;
-  st: number;
-  ks: Transform;
-  ind?: number;
-  parent?: number;
+  ty: number; // type
+  nm?: string; // name
+  ip: number; // in point
+  op: number; // out point
+  st: number; // start time
+  ks: Transform; // key frames
+  ind?: number; // index
+  parent?: number; // parent
 }
 
 export interface LottieAnimation {
-  v: string;
-  fr: number;
-  ip: number;
-  op: number;
-  w: number;
-  h: number;
-  nm?: string;
-  ddd: number;
-  layers: Layer[];
-  assets?: any[];
-  fonts?: any[];
-  chars?: any[];
-  markers?: any[];
+  v: string; // version
+  fr: number; // frame rate
+  ip: number; // in point
+  op: number; // out point
+  w: number; // width
+  h: number; // height
+  nm?: string; // name
+  ddd: number; // three dimensional
+  layers: Layer[]; // layers
+  assets?: any[]; // assets
+  fonts?: any[]; // fonts
+  chars?: any[]; // characters
+  markers?: any[]; // markers
 }

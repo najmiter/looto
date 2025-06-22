@@ -1,4 +1,4 @@
-import type { LottieAnimation } from '../types/lottie';
+import type { LottieAnimation } from '@/types/lottie';
 
 export const readLottieFile = async (
   file: File

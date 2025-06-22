@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import type { LottieAnimation } from '../types/lottie';
-
-interface VisualEditorProps {
-  lottieData: object | null;
-  onChange: (newData: object) => void;
-}
+import type { LottieAnimation } from '@/types/lottie';
+import ColorPicker from './ColorPicker';
+import { extractColorsFromLayer, updateColorInLayer } from '@/utils/colorUtils';
+import type { ColorProperty, VisualEditorProps } from '@/types';
 
 const VisualEditor: React.FC<VisualEditorProps> = ({
   lottieData,
@@ -12,10 +10,19 @@ const VisualEditor: React.FC<VisualEditorProps> = ({
 }) => {
   const [animation, setAnimation] = useState<LottieAnimation | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<number | null>(null);
+  const [layerColors, setLayerColors] = useState<{
+    [key: number]: ColorProperty[];
+  }>({});
 
   useEffect(() => {
     if (lottieData) {
       setAnimation(lottieData as LottieAnimation);
+      // extract colors from all layers
+      const colors: { [key: number]: ColorProperty[] } = {};
+      (lottieData as LottieAnimation).layers.forEach((layer, index) => {
+        colors[index] = extractColorsFromLayer(layer);
+      });
+      setLayerColors(colors);
     }
   }, [lottieData]);
 
@@ -43,6 +50,29 @@ const VisualEditor: React.FC<VisualEditorProps> = ({
     const updatedAnimation = { ...animation, layers: newLayers };
     setAnimation(updatedAnimation);
     onChange(updatedAnimation);
+  };
+
+  const handleColorChange = (
+    layerIndex: number,
+    colorPath: string,
+    newColor: number[]
+  ) => {
+    if (!animation) return;
+
+    const newLayers = [...animation.layers];
+    newLayers[layerIndex] = updateColorInLayer(
+      newLayers[layerIndex],
+      colorPath,
+      newColor
+    );
+
+    const updatedAnimation = { ...animation, layers: newLayers };
+    setAnimation(updatedAnimation);
+    onChange(updatedAnimation);
+
+    const newLayerColors = { ...layerColors };
+    newLayerColors[layerIndex] = extractColorsFromLayer(newLayers[layerIndex]);
+    setLayerColors(newLayerColors);
   };
 
   const handleAnimationPropertyChange = (
@@ -182,6 +212,12 @@ const VisualEditor: React.FC<VisualEditorProps> = ({
                   <span className="font-medium text-gray-900 dark:text-white">
                     {layer.nm || `Layer ${index + 1}`}
                   </span>
+                  {layerColors[index] && layerColors[index].length > 0 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                      {layerColors[index].length} color
+                      {layerColors[index].length !== 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
@@ -292,6 +328,36 @@ const VisualEditor: React.FC<VisualEditorProps> = ({
                     </div>
                   </div>
 
+                  {/* Colors Section */}
+                  {layerColors[index] && layerColors[index].length > 0 && (
+                    <div className="pt-4 border-t border-gray-200 dark:border-dark-600">
+                      <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                        Colors ({layerColors[index].length})
+                      </h5>
+                      <div className="space-y-3">
+                        {layerColors[index].map((colorProp, colorIndex) => (
+                          <div
+                            key={`${index}-${colorIndex}`}
+                            className="p-3 bg-gray-50 dark:bg-dark-700 rounded-md"
+                          >
+                            <ColorPicker
+                              value={colorProp.value}
+                              onChange={(newColor) =>
+                                handleColorChange(
+                                  index,
+                                  colorProp.path,
+                                  newColor
+                                )
+                              }
+                              label={colorProp.label}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Transform Section */}
                   {layer.ks && (
                     <div className="pt-4 border-t border-gray-200 dark:border-dark-600">
                       <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">

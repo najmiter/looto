@@ -1,18 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  --color-violet-50: #faf5ff;
-  --color-violet-100: #f3e8ff;
-  --color-violet-200: #e9d5ff;
-  --color-violet-300: #d8b4fe;
-  --color-violet-400: #c084fc;
-  --color-violet-500: #a855f7;
-  --color-violet-600: #9333ea;
-  --color-violet-700: #7c3aed;
-  --color-violet-800: #6b21a8;
-  --color-violet-900: #581c87;
-  --color-violet-950: #3b0764;
-
   --color-dark-900: #181818;
   --color-dark-800: #1f1f1f;
   --color-dark-700: #262626;
@@ -73,5 +61,10 @@
 
   html.dark {
     color-scheme: dark;
+  }
+
+  input {
+    @apply outline-none;
+
   }
 }

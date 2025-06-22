@@ -72,7 +72,7 @@ const Editor: React.FC<EditorProps> = ({
                 value={jsonString}
                 onChange={handleInputChange}
                 rows={20}
-                className="block w-full rounded-lg border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-700 text-gray-900 dark:text-gray-100 font-mono text-sm p-4 focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
+                className="block w-full rounded-lg border outline-none border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-700 text-gray-900 dark:text-gray-100 font-mono text-sm p-4 focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
                 placeholder="Paste your Lottie JSON here..."
               />
             </div>

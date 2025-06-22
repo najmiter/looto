@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lottie.knoctal.com/sitemap.xml

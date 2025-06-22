@@ -3,18 +3,12 @@ import type { LottieAnimation } from '../types/lottie';
 
 interface VisualEditorProps {
   lottieData: object | null;
-  fileName: string;
   onChange: (newData: object) => void;
-  onFileNameChange: (newFileName: string) => void;
-  onSave?: (data: object, filename: string) => void;
 }
 
 const VisualEditor: React.FC<VisualEditorProps> = ({
   lottieData,
-  fileName,
   onChange,
-  onFileNameChange,
-  onSave,
 }) => {
   const [animation, setAnimation] = useState<LottieAnimation | null>(null);
   const [selectedLayer, setSelectedLayer] = useState<number | null>(null);

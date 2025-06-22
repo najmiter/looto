@@ -31,29 +31,6 @@ const Editor: React.FC<EditorProps> = ({
     setErrorMessage('');
   };
 
-  const handleSave = () => {
-    try {
-      const parsedJson = JSON.parse(jsonString);
-      const validationResults = validateLottie(parsedJson);
-      if (!validationResults.isValid) {
-        const errorMsg = validationResults.errors.join(', ');
-        setErrorMessage(errorMsg);
-        handleError(errorMsg);
-        return;
-      }
-      onChange(parsedJson);
-      console.log('Lottie JSON saved:', parsedJson);
-      if (onSave) {
-        onSave(parsedJson, fileName);
-      }
-    } catch {
-      const errorMsg = 'Invalid JSON format';
-      setErrorMessage(errorMsg);
-      handleError(errorMsg);
-    }
-  };
-
-  // Clear error message when switching tabs or when data changes successfully
   useEffect(() => {
     setErrorMessage('');
   }, [activeTab, lottieData]);
@@ -87,13 +64,7 @@ const Editor: React.FC<EditorProps> = ({
 
       <div className="p-6">
         {activeTab === 'visual' ? (
-          <VisualEditor
-            lottieData={lottieData}
-            fileName={fileName}
-            onChange={onChange}
-            onFileNameChange={onFileNameChange}
-            onSave={onSave}
-          />
+          <VisualEditor lottieData={lottieData} onChange={onChange} />
         ) : (
           <div className="space-y-4">
             <div className="relative">

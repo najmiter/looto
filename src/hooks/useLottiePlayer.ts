@@ -13,8 +13,6 @@ export function useLottiePlayer(containerRef: React.RefObject<HTMLDivElement | n
   const [speed, setSpeed] = useState(1);
   const [frame, setFrame] = useState(0);
   const [totalFrames, setTotalFrames] = useState(0);
-  // bumped after every rebuild so DOM-dependent effects (layer tagging,
-  // selection highlight) know to re-run against the fresh SVG tree
   const [reloadTick, setReloadTick] = useState(0);
 
   isPlayingRef.current = isPlaying;
@@ -28,18 +26,28 @@ export function useLottiePlayer(containerRef: React.RefObject<HTMLDivElement | n
     const handle = setTimeout(() => {
       if (!containerRef.current) return;
 
+      // carry the playhead over so an edit doesn't restart the animation
+      const resumeFrame = animationRef.current?.currentFrame ?? 0;
       animationRef.current?.destroy();
+
       const animation = lottie.loadAnimation({
         container: containerRef.current,
         renderer: 'svg',
         loop: true,
-        autoplay: isPlayingRef.current,
+        autoplay: false,
         // clone so lottie-web's internal mutations never leak back into the
         // data that gets saved to disk
         animationData: structuredClone(lottieData),
       });
 
       animation.setSpeed(speedRef.current);
+      const startFrame = Math.min(resumeFrame, Math.max(animation.totalFrames - 1, 0));
+      if (isPlayingRef.current) {
+        animation.goToAndPlay(startFrame, true);
+      } else {
+        animation.goToAndStop(startFrame, true);
+      }
+
       setTotalFrames(Math.round(animation.totalFrames));
       animation.addEventListener('enterFrame', () => {
         setFrame(Math.round(animation.currentFrame));
@@ -49,12 +57,16 @@ export function useLottiePlayer(containerRef: React.RefObject<HTMLDivElement | n
       setReloadTick((tick) => tick + 1);
     }, 250);
 
+    return () => clearTimeout(handle);
+  }, [containerRef, lottieData]);
+
+  // destroy the instance only when the preview actually unmounts
+  useEffect(() => {
     return () => {
-      clearTimeout(handle);
       animationRef.current?.destroy();
       animationRef.current = null;
     };
-  }, [containerRef, lottieData]);
+  }, []);
 
   const togglePlay = () => {
     const animation = animationRef.current;

@@ -82,8 +82,6 @@
     cursor: pointer;
   }
 
-  /* layers in the preview are clickable; brightness instead of opacity
-     because lottie-web drives inline opacity on these groups every frame */
   .lottie-canvas [data-layer-index] {
     cursor: pointer;
   }

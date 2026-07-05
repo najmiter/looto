@@ -15,7 +15,10 @@ export default function App() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50 text-gray-900 transition-colors dark:bg-dark-900 dark:text-gray-100">
-      <div className="pointer-events-none fixed inset-x-0 top-0 -z-0 h-80 bg-gradient-to-b from-primary-500/10 via-primary-500/5 to-transparent" />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 -z-0 h-80 bg-gradient-to-b from-primary-500/10 via-primary-500/5 to-transparent"
+      />
 
       <Header
         hasDocument={doc.lottieData !== null}
@@ -34,7 +37,8 @@ export default function App() {
 
       <ErrorBanner message={doc.error} onDismiss={() => doc.setError('')} />
 
-      <main className="relative z-10 mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6">
+      <main
+        className={`relative z-10 w-full flex-1 px-4 py-6 sm:px-6 ${doc.lottieData ? '' : 'mx-auto max-w-[1600px]'}`}>
         {!doc.lottieData ? (
           <Hero onFileUpload={doc.loadDocument} />
         ) : (

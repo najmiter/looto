@@ -58,7 +58,9 @@ export default function Workspace({
               onDelete={onDeleteLayer}
             />
           </div>
-          <div className="order-1 h-[60vh] lg:order-2 lg:h-auto lg:min-h-0">{preview}</div>
+          <div className="order-1 h-[60vh] lg:order-2 lg:h-auto lg:min-h-0">
+            <div className="mx-auto h-full w-full max-w-4xl">{preview}</div>
+          </div>
           <div className="order-3 h-[32rem] lg:h-auto lg:min-h-0">
             <Inspector
               animation={animation}

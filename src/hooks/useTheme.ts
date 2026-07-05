@@ -1,16 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export function useTheme() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('theme');
-    // older versions stored the value JSON-encoded ('"dark"'), so strip quotes
-    const theme = stored?.replace(/"/g, '') ?? null;
-    const dark = theme === null ? window.matchMedia('(prefers-color-scheme: dark)').matches : theme === 'dark';
-    setIsDarkMode(dark);
-    document.documentElement.classList.toggle('dark', dark);
-  }, []);
+  const [isDarkMode, setIsDarkMode] = useState(() => checkIsDarkMode());
 
   const toggleDarkMode = () => {
     const next = !isDarkMode;
@@ -20,4 +11,15 @@ export function useTheme() {
   };
 
   return { isDarkMode, toggleDarkMode };
+}
+
+function checkIsDarkMode() {
+  const stored = localStorage.getItem('theme');
+  const theme = stored?.replace(/"/g, '') ?? null;
+  const dark = theme === null ? window.matchMedia('(prefers-color-scheme: dark)').matches : theme === 'dark';
+
+  // they wont forgive me for this but it works (smh my h)
+  document.documentElement.classList.toggle('dark', dark);
+
+  return dark;
 }

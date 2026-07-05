@@ -14,12 +14,15 @@ export function useLottiePlayer(containerRef: React.RefObject<HTMLDivElement | n
   const [frame, setFrame] = useState(0);
   const [totalFrames, setTotalFrames] = useState(0);
   const [reloadTick, setReloadTick] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   isPlayingRef.current = isPlaying;
   speedRef.current = speed;
 
   useEffect(() => {
     if (!containerRef.current || !lottieData) return;
+
+    setIsLoading(true);
 
     // debounce so dragging a color picker or typing doesn't rebuild the
     // whole animation on every keystroke
@@ -55,12 +58,12 @@ export function useLottiePlayer(containerRef: React.RefObject<HTMLDivElement | n
 
       animationRef.current = animation;
       setReloadTick((tick) => tick + 1);
+      setIsLoading(false);
     }, 250);
 
     return () => clearTimeout(handle);
   }, [containerRef, lottieData]);
 
-  // destroy the instance only when the preview actually unmounts
   useEffect(() => {
     return () => {
       animationRef.current?.destroy();
@@ -93,5 +96,5 @@ export function useLottiePlayer(containerRef: React.RefObject<HTMLDivElement | n
     setIsPlaying(false);
   };
 
-  return { animationRef, isPlaying, togglePlay, speed, cycleSpeed, frame, totalFrames, scrub, reloadTick };
+  return { animationRef, isPlaying, togglePlay, speed, cycleSpeed, frame, totalFrames, scrub, reloadTick, isLoading };
 }

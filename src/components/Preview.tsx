@@ -3,6 +3,7 @@ import { useLottiePlayer } from '@/hooks/useLottiePlayer';
 import { useLayerSelection } from '@/hooks/useLayerSelection';
 import PlaybackControls from './PlaybackControls';
 import LayerHighlight from './LayerHighlight';
+import PreviewLoader from './PreviewLoader';
 
 interface PreviewProps {
   lottieData: object | null;
@@ -30,6 +31,7 @@ export default function Preview({ lottieData, selectedLayer = null, onSelectLaye
       <div className="checkerboard relative min-h-0 flex-1 overflow-hidden rounded-xl border border-gray-200 dark:border-dark-600">
         <div ref={containerRef} className="lottie-canvas h-full w-full" />
         {selectionBox && <LayerHighlight box={selectionBox} label={selectedLayerName} />}
+        {player.isLoading && <PreviewLoader variant={player.reloadTick === 0 ? 'initial' : 'refresh'} />}
       </div>
 
       <PlaybackControls

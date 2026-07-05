@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { LottieAnimation } from '@/types/lottie';
 import type { ColorProperty } from '@/types';
 import { normalizedToHex } from '@/utils/colorUtils';
@@ -21,6 +21,16 @@ const LAYER_TYPES: { [key: number]: { name: string; icon: string } } = {
 };
 
 const LayersPanel: React.FC<LayersPanelProps> = ({ animation, layerColors, selectedLayer, onSelect, onDelete }) => {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedLayer === null) return;
+
+    listRef.current
+      ?.querySelector(`[data-layer-row="${selectedLayer}"]`)
+      ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [selectedLayer]);
+
   return (
     <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-dark-600 dark:bg-dark-800">
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-dark-600">
@@ -30,7 +40,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ animation, layerColors, selec
         </span>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2.5">
+      <div ref={listRef} className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2.5">
         {animation.layers.map((layer, index) => {
           const type = LAYER_TYPES[layer.ty] || {
             name: `Type ${layer.ty}`,
@@ -42,6 +52,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ animation, layerColors, selec
           return (
             <div
               key={index}
+              data-layer-row={index}
               onClick={() => onSelect(isSelected ? null : index)}
               className={`group flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-all ${
                 isSelected

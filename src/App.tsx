@@ -1,66 +1,74 @@
-import React, { useState, useEffect } from 'react';
-import Editor from './components/Editor';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Preview from './components/Preview';
 import FileUpload from './components/FileUpload';
+import LayersPanel from './components/LayersPanel';
+import Inspector from './components/Inspector';
+import JsonEditor from './components/JsonEditor';
 import { validateLottie } from './utils/lottieValidator';
 import { handleError } from './utils/errorHandler';
 import { writeLottieFile } from './utils/fileHandler';
+import { extractColorsFromLayer } from './utils/colorUtils';
 import type { LottieAnimation } from './types/lottie';
+import type { ColorProperty } from './types';
 
-const App: React.FC = () => {
-  const [lottieData, setLottieData] = useState<object | null>(null);
+export default function App() {
+  const [lottieData, setLottieData] = useState<LottieAnimation | null>(null);
+  const [originalData, setOriginalData] = useState<LottieAnimation | null>(null);
+  const [jsonString, setJsonString] = useState<string>('');
+  const [jsonError, setJsonError] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [fileName, setFileName] = useState<string>('animation.json');
-  const [jsonString, setJsonString] = useState<string>('');
+  const [view, setView] = useState<'design' | 'json'>('design');
+  const [selectedLayer, setSelectedLayer] = useState<number | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const theme = localStorage.getItem('theme');
-    if (theme === null) {
-      const prefersDark = window.matchMedia(
-        '(prefers-color-scheme: dark)'
-      ).matches;
-      setIsDarkMode(prefersDark);
-
-      document.documentElement.classList.toggle('dark', prefersDark);
-    } else {
-      const parsedTheme = JSON.parse(theme);
-      setIsDarkMode(parsedTheme === 'dark');
-      document.documentElement.classList.toggle('dark', parsedTheme === 'dark');
-    }
+    const stored = localStorage.getItem('theme');
+    // older versions stored the value JSON-encoded ('"dark"'), so strip quotes
+    const theme = stored?.replace(/"/g, '') ?? null;
+    const dark = theme === null ? window.matchMedia('(prefers-color-scheme: dark)').matches : theme === 'dark';
+    setIsDarkMode(dark);
+    document.documentElement.classList.toggle('dark', dark);
   }, []);
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
-    const theme = newDarkMode ? 'dark' : 'light';
     setIsDarkMode(newDarkMode);
-    localStorage.setItem('theme', JSON.stringify(theme));
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', newDarkMode);
   };
 
+  const layerColors = useMemo(() => {
+    const colors: { [key: number]: ColorProperty[] } = {};
+    lottieData?.layers?.forEach((layer, index) => {
+      colors[index] = extractColorsFromLayer(layer);
+    });
+    return colors;
+  }, [lottieData]);
+
   const handleFileUpload = (jsonData: object, uploadedFileName?: string) => {
-    try {
-      const validationResult = validateLottie(jsonData);
-      if (validationResult.isValid) {
-        setLottieData(jsonData);
-        setJsonString(JSON.stringify(jsonData, null, 2));
-        if (uploadedFileName) {
-          setFileName(uploadedFileName);
-        }
-        setError('');
-      } else {
-        throw new Error(validationResult.errors.join(', '));
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      handleError(errorMessage);
-      setError(errorMessage);
+    const validationResult = validateLottie(jsonData);
+    if (!validationResult.isValid) {
+      const message = validationResult.errors.join(', ');
+      handleError(message);
+      setError(message);
+      return;
     }
+    const animation = jsonData as LottieAnimation;
+    setLottieData(animation);
+    setOriginalData(structuredClone(animation));
+    setJsonString(JSON.stringify(animation, null, 2));
+    if (uploadedFileName) setFileName(uploadedFileName);
+    setSelectedLayer(null);
+    setError('');
+    setJsonError('');
   };
 
-  const handleLottieChange = (newData: object) => {
+  const handleLottieChange = (newData: LottieAnimation) => {
     setLottieData(newData);
     setJsonString(JSON.stringify(newData, null, 2));
+    setJsonError('');
   };
 
   const handleJsonStringChange = (newJsonString: string) => {
@@ -70,229 +78,282 @@ const App: React.FC = () => {
       const validationResult = validateLottie(parsedData);
       if (validationResult.isValid) {
         setLottieData(parsedData);
-        setError('');
+        setJsonError('');
       } else {
-        setError(validationResult.errors.join(', '));
+        setJsonError(validationResult.errors.join(', '));
       }
-    } catch (err) {
-      setError('Invalid JSON format');
+    } catch {
+      setJsonError('Invalid JSON format');
     }
+  };
+
+  const handleLayerDelete = (layerIndex: number) => {
+    if (!lottieData) return;
+
+    const removed = lottieData.layers[layerIndex];
+    // layers referencing the removed layer via parent would point at a
+    // missing index and crash strict players — reparent them to the removed
+    // layer's own parent (or detach them)
+    const newLayers = lottieData.layers
+      .filter((_, index) => index !== layerIndex)
+      .map((layer) => {
+        if (removed.ind === undefined || layer.parent !== removed.ind) {
+          return layer;
+        }
+        const { parent: _parent, ...rest } = layer;
+        return removed.parent !== undefined ? { ...rest, parent: removed.parent } : rest;
+      });
+
+    handleLottieChange({ ...lottieData, layers: newLayers });
+    setSelectedLayer(null);
+  };
+
+  const handleRevert = () => {
+    if (!originalData) return;
+    handleLottieChange(structuredClone(originalData));
+    setSelectedLayer(null);
   };
 
   const handleSaveFile = async () => {
     if (!lottieData) return;
-
     try {
-      await writeLottieFile(lottieData as LottieAnimation, fileName);
+      await writeLottieFile(lottieData, fileName.endsWith('.json') ? fileName : `${fileName}.json`);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to save file';
-      handleError(errorMessage);
-      setError(errorMessage);
+      const message = err instanceof Error ? err.message : 'Failed to save file';
+      handleError(message);
+      setError(message);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 transition-colors duration-200 flex flex-col">
-      <header className="bg-white dark:bg-dark-800 shadow-sm border-b border-gray-200 dark:border-dark-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <img
-                src="/lottie-editor.svg"
-                width={40}
-                height={40}
-                alt="lootie logo"
-                className="rounded-xl"
-              />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Lootie
-                </h1>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Free Lottie Editor
-                </p>
-              </div>
-            </div>
+  const handleReplaceFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    file
+      .text()
+      .then((content) => handleFileUpload(JSON.parse(content), file.name))
+      .catch(() => setError('This file is not valid JSON.'));
+    event.target.value = '';
+  };
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center space-x-3">
-                {lottieData && (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={fileName}
-                      onChange={(e) => setFileName(e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-gray-300 dark:border-dark-600 rounded-md bg-white dark:bg-dark-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                      placeholder="filename.json"
+  const isDirty = originalData !== null && JSON.stringify(lottieData) !== JSON.stringify(originalData);
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-gray-50 text-gray-900 transition-colors dark:bg-dark-900 dark:text-gray-100">
+      <div className="pointer-events-none fixed inset-x-0 top-0 -z-0 h-80 bg-gradient-to-b from-primary-500/10 via-primary-500/5 to-transparent" />
+
+      <header className="sticky top-0 z-20 border-b border-gray-200/80 bg-white/80 backdrop-blur-lg dark:border-dark-600/80 dark:bg-dark-900/80">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-3">
+            <img width={36} height={36} alt="Lootie logo" src="/lottie-editor.svg" className="rounded-xl" />
+            <div className="sr-only">
+              <h1 className="">Lootie</h1>
+            </div>
+          </div>
+
+          {lottieData && (
+            <div className="hidden items-center rounded-xl border border-gray-200 bg-white p-1 shadow-sm md:flex dark:border-dark-600 dark:bg-dark-800">
+              {(['design', 'json'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition ${
+                    view === v
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-900 dark:text-dark-200 dark:hover:text-white'
+                  }`}>
+                  {v === 'json' ? 'JSON' : 'Design'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            {lottieData && (
+              <>
+                <input
+                  type="text"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  aria-label="File name"
+                  className="hidden w-44 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 sm:block dark:border-dark-600 dark:bg-dark-800 dark:text-gray-100"
+                  placeholder="filename.json"
+                />
+
+                <input
+                  ref={replaceInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleReplaceFile}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => replaceInputRef.current?.click()}
+                  title="Open another file"
+                  className="rounded-lg border border-gray-200 p-2 text-gray-500 transition hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-dark-200 dark:hover:text-primary-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                     />
-                    <button
-                      onClick={handleSaveFile}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors"
-                    >
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                      Download
-                    </button>
-                  </div>
-                )}
+                  </svg>
+                </button>
 
                 <button
-                  onClick={toggleDarkMode}
-                  className="p-2 rounded-lg bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
-                  aria-label="Toggle dark mode"
-                >
-                  {isDarkMode ? (
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                    </svg>
-                  )}
+                  onClick={handleRevert}
+                  disabled={!isDirty}
+                  title="Revert all changes"
+                  className="rounded-lg border border-gray-200 p-2 text-gray-500 transition enabled:hover:border-primary-400 enabled:hover:text-primary-600 disabled:opacity-40 dark:border-dark-600 dark:text-dark-200 dark:enabled:hover:text-primary-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                  </svg>
                 </button>
-              </div>
-              <div className="hidden md:flex items-center space-x-4">
-                <a
-                  target="_blank"
-                  href="https://github.com/najmiter/looto"
-                  className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  GitHub ↗
-                </a>
-              </div>
-            </div>
+
+                <button
+                  onClick={handleSaveFile}
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary-500/30 transition hover:shadow-lg hover:shadow-primary-500/40 active:scale-95">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={toggleDarkMode}
+              aria-label="Toggle dark mode"
+              className="rounded-lg border border-gray-200 p-2 text-gray-500 transition hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-dark-200 dark:hover:text-primary-400">
+              {isDarkMode ? (
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700 p-6">
-            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-              Upload Lottie Animation
-            </h2>
-            <FileUpload onFileUpload={handleFileUpload} />
-            {error && (
-              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-              </div>
-            )}
+      {error && (
+        <div className="relative z-10 mx-auto mt-4 w-full max-w-2xl px-4">
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 shadow-sm dark:border-red-500/30 dark:bg-red-500/10">
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <button
+              onClick={() => setError('')}
+              aria-label="Dismiss error"
+              className="text-red-400 transition hover:text-red-600">
+              ✕
+            </button>
           </div>
         </div>
+      )}
 
-        {lottieData ? (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-            <div className="xl:col-span-2">
-              <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700">
-                <Editor
-                  lottieData={lottieData}
-                  jsonString={jsonString}
-                  fileName={fileName}
-                  onChange={handleLottieChange}
-                  onJsonStringChange={handleJsonStringChange}
-                  onFileNameChange={setFileName}
-                  onSave={async (data, filename) => {
-                    try {
-                      await writeLottieFile(data as LottieAnimation, filename);
-                    } catch (err) {
-                      const errorMessage =
-                        err instanceof Error
-                          ? err.message
-                          : 'Failed to save file';
-                      handleError(errorMessage);
-                      setError(errorMessage);
-                    }
-                  }}
-                />
-              </div>
+      <main className="relative z-10 mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6">
+        {!lottieData ? (
+          <div className="flex min-h-[70vh] flex-col items-center justify-center py-10">
+            <div className="mb-10 max-w-2xl text-center">
+              <h2 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
+                Edit Lottie animations,
+                <br />
+                <span className="bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent dark:from-primary-300 dark:to-primary-500">
+                  no sign-up needed
+                </span>
+              </h2>
+              <p className="mx-auto mt-4 max-w-lg text-base text-gray-500 dark:text-dark-200">
+                Recolor, retime, and tweak your animations with a live preview. Your files never leave your device.
+              </p>
             </div>
 
-            <div className="xl:col-span-1">
-              <div className="bg-white dark:bg-dark-800 rounded-xl shadow-sm border border-gray-200 dark:border-dark-700 p-6 sticky top-8">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                  Preview
-                </h3>
-                <div className="aspect-square bg-gray-50 dark:bg-dark-700 rounded-lg border border-gray-200 dark:border-dark-600 flex items-center justify-center">
-                  <Preview lottieData={lottieData} />
-                </div>
-                <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                  <p>The animation will play automatically when loaded.</p>
-                </div>
-              </div>
-            </div>
+            <FileUpload onFileUpload={handleFileUpload} />
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gray-100 dark:bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-12 h-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 16h14l-2-16M11 9v6M13 9v6"
-                />
-              </svg>
+          <div className="grid gap-4 lg:h-[calc(100dvh-7.5rem)] lg:min-h-[560px] lg:grid-cols-[280px_minmax(0,1fr)_340px]">
+            {view === 'design' ? (
+              <>
+                <div className="order-2 h-96 lg:order-1 lg:h-auto lg:min-h-0">
+                  <LayersPanel
+                    animation={lottieData}
+                    layerColors={layerColors}
+                    selectedLayer={selectedLayer}
+                    onSelect={setSelectedLayer}
+                    onDelete={handleLayerDelete}
+                  />
+                </div>
+                <div className="order-1 h-[60vh] lg:order-2 lg:h-auto lg:min-h-0">
+                  <Preview lottieData={lottieData} />
+                </div>
+                <div className="order-3 h-[32rem] lg:h-auto lg:min-h-0">
+                  <Inspector
+                    animation={lottieData}
+                    selectedLayer={selectedLayer}
+                    layerColors={layerColors}
+                    onChange={handleLottieChange}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="order-2 h-[60vh] lg:order-1 lg:col-span-2 lg:h-auto lg:min-h-0">
+                  <JsonEditor jsonString={jsonString} error={jsonError} onChange={handleJsonStringChange} />
+                </div>
+                <div className="order-1 h-[50vh] lg:order-2 lg:h-auto lg:min-h-0">
+                  <Preview lottieData={lottieData} />
+                </div>
+              </>
+            )}
+
+            {/* mobile view switcher */}
+            <div className="order-4 flex justify-center md:hidden">
+              <div className="flex items-center rounded-xl border border-gray-200 bg-white p-1 shadow-sm dark:border-dark-600 dark:bg-dark-800">
+                {(['design', 'json'] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={`rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition ${
+                      view === v ? 'bg-primary-600 text-white shadow-sm' : 'text-gray-500 dark:text-dark-200'
+                    }`}>
+                    {v === 'json' ? 'JSON' : 'Design'}
+                  </button>
+                ))}
+              </div>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No animation loaded
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Upload a Lottie JSON file to get started with editing.
-            </p>
           </div>
         )}
       </main>
-      <footer>
-        <div className="bg-white dark:bg-dark-800 border-t border-gray-200 dark:border-dark-700 py-6">
-          <div className="max-w-7xl space-y-2.5 mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-dark-500 dark:text-dark-300">
+
+      {!lottieData && (
+        <footer className="relative z-10 border-t border-gray-200 bg-white/60 py-4 dark:border-dark-600 dark:bg-dark-900/60">
+          <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-2 px-4 text-xs text-gray-500 sm:flex-row sm:px-6 dark:text-dark-300">
             <p>
-              &copy; {new Date().getFullYear()} Knoctal. All rights reserved.
-            </p>
-            <p>
-              Made with ❤️ by{' '}
+              &copy; {new Date().getFullYear()} Knoctal · Made with 💜 by{' '}
               <a
                 target="_blank"
                 href="https://www.knoctal.com/"
-                className="text-violet-600 dark:text-violet-400 hover:underline"
-              >
+                className="font-medium text-primary-600 hover:underline dark:text-primary-400">
                 Knoctal
               </a>
             </p>
+            <a
+              target="_blank"
+              href="https://github.com/najmiter/looto"
+              className="font-medium transition hover:text-gray-900 dark:hover:text-white">
+              GitHub ↗
+            </a>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
-};
-
-export default App;
+}

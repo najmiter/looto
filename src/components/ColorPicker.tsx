@@ -1,109 +1,90 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { normalizedToHex, hexToNormalized } from '@/utils/colorUtils';
 
 interface ColorPickerProps {
-  value: number[] | { k: number[] };
+  value: number[];
   onChange: (newColor: number[]) => void;
   label: string;
-  disabled?: boolean;
 }
 
-const ColorPicker: React.FC<ColorPickerProps> = ({
-  value,
-  onChange,
-  label,
-  disabled = false,
-}) => {
-  const getColorArray = (): number[] => {
-    if (Array.isArray(value)) {
-      return value;
-    }
-    if (
-      value &&
-      typeof value === 'object' &&
-      'k' in value &&
-      Array.isArray(value.k)
-    ) {
-      return value.k;
-    }
-    return [0, 0, 0, 1];
-  };
-
-  const colorArray = getColorArray();
+const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, label }) => {
+  const colorArray = Array.isArray(value) ? value : [0, 0, 0, 1];
   const hexValue = normalizedToHex(colorArray);
+  const hasAlpha = colorArray.length > 3;
 
-  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newHex = event.target.value;
-    const newColorArray = hexToNormalized(newHex);
+  const [hexText, setHexText] = useState(hexValue.toUpperCase());
 
-    if (colorArray.length > 3) {
+  useEffect(() => {
+    setHexText(hexValue.toUpperCase());
+  }, [hexValue]);
+
+  const commitHex = (hex: string) => {
+    const newColorArray = hexToNormalized(hex);
+    if (hasAlpha) {
       newColorArray[3] = colorArray[3];
     }
-
     onChange(newColorArray);
+  };
+
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const text = event.target.value;
+    if (!/^#?[0-9A-Fa-f]{0,6}$/.test(text)) return;
+    setHexText(text.toUpperCase());
+    // only commit complete colors; partial input keeps the previous color
+    if (/^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(text)) {
+      commitHex(text);
+    }
   };
 
   const handleAlphaChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newAlpha = parseFloat(event.target.value) / 100;
+    if (!Number.isFinite(newAlpha)) return;
     const newColorArray = [...colorArray];
     newColorArray[3] = newAlpha;
     onChange(newColorArray);
   };
 
-  const alpha = colorArray.length > 3 ? Math.round(colorArray[3] * 100) : 100;
+  const alpha = hasAlpha ? Math.round(colorArray[3] * 100) : 100;
 
   return (
-    <div className="flex items-center space-x-3">
-      <div className="flex items-center space-x-2 flex-1">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-0 flex-shrink">
-          {label}
-        </label>
-        <div className="flex items-center space-x-2">
-          <div
-            className="w-8 h-8 rounded border border-gray-300 dark:border-dark-600 flex-shrink-0"
-            style={{ backgroundColor: hexValue }}
-          />
+    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-dark-600 dark:bg-dark-800">
+      <div className="flex items-center gap-3">
+        <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-inner dark:border-dark-600">
           <input
             type="color"
             value={hexValue}
-            onChange={handleColorChange}
-            disabled={disabled}
-            className="w-8 h-8 rounded border-0 cursor-pointer disabled:cursor-not-allowed"
+            onChange={(e) => commitHex(e.target.value)}
+            aria-label={`${label} color`}
+            className="absolute -inset-1 h-[calc(100%+8px)] w-[calc(100%+8px)] cursor-pointer border-0 p-0"
           />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">{label}</p>
           <input
             type="text"
-            value={hexValue.toUpperCase()}
-            onChange={(e) => {
-              if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) {
-                handleColorChange(e as any);
-              }
-            }}
-            disabled={disabled}
-            className="w-20 px-2 py-1 text-xs border border-gray-300 dark:border-dark-600 rounded bg-white dark:bg-dark-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:opacity-50"
+            value={hexText}
+            onChange={handleTextChange}
+            onBlur={() => setHexText(hexValue.toUpperCase())}
+            className="mt-0.5 w-24 rounded-md border border-transparent bg-transparent px-1 py-0.5 font-mono text-xs text-gray-500 transition focus:border-primary-500 focus:text-gray-900 focus:ring-2 focus:ring-primary-500/30 dark:text-dark-200 dark:focus:text-gray-100"
             placeholder="#000000"
+            spellCheck={false}
           />
         </div>
+        {hasAlpha && (
+          <div className="flex shrink-0 items-center gap-2">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={alpha}
+              onChange={handleAlphaChange}
+              aria-label={`${label} opacity`}
+              className="h-1.5 w-16 cursor-pointer appearance-none rounded-full bg-gray-200 accent-primary-600 dark:bg-dark-600"
+            />
+            <span className="w-9 text-right font-mono text-xs text-gray-500 dark:text-dark-200">{alpha}%</span>
+          </div>
+        )}
       </div>
-
-      {colorArray.length > 3 && (
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <label className="text-xs text-gray-600 dark:text-gray-400">
-            Alpha:
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={alpha}
-            onChange={handleAlphaChange}
-            disabled={disabled}
-            className="w-16 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 disabled:opacity-50"
-          />
-          <span className="text-xs text-gray-600 dark:text-gray-400 w-8">
-            {alpha}%
-          </span>
-        </div>
-      )}
     </div>
   );
 };

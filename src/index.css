@@ -12,7 +12,18 @@
   --color-dark-100: #d4d4d8;
   --color-dark-50: #f4f4f5;
 
-  --color-primary: var(--color-violet-500);
+  --color-primary-50: #f0f5ff;
+  --color-primary-100: #e1ebfe;
+  --color-primary-200: #c9dafe;
+  --color-primary-300: #a4c0fd;
+  --color-primary-400: #7da3ff;
+  --color-primary-500: #618fff;
+  --color-primary-600: #4370ec;
+  --color-primary-700: #3558d0;
+  --color-primary-800: #2e49a8;
+  --color-primary-900: #2b4184;
+
+  --color-primary: var(--color-primary-500);
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -26,16 +37,16 @@
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: theme('colors.gray.100');
+  background-color: transparent;
 }
 
 @media (prefers-color-scheme: dark) {
   ::-webkit-scrollbar-track {
-    background-color: theme('colors.gray.800');
+    background-color: transparent;
   }
 }
 
@@ -65,6 +76,22 @@
 
   input {
     @apply outline-none;
+  }
 
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  .checkerboard {
+    --checker: rgba(0, 0, 0, 0.08);
+    background-image:
+      linear-gradient(45deg, var(--checker) 25%, transparent 25%, transparent 75%, var(--checker) 75%),
+      linear-gradient(45deg, var(--checker) 25%, transparent 25%, transparent 75%, var(--checker) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+  }
+
+  .dark .checkerboard {
+    --checker: rgba(255, 255, 255, 0.06);
   }
 }

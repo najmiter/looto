@@ -1,21 +1,9 @@
 export interface ColorProperty {
+  // path to the animated-property wrapper object (e.g. "shapes[0].it[1].c"),
+  // never to a value inside it — updates must preserve the {a, k} structure
   path: string;
   label: string;
-  value: number[] | { k: number[] };
+  value: number[]; // rgb(a), normalized 0-1
   type: 'fill' | 'stroke' | 'gradient';
-}
-
-export interface EditorProps {
-  lottieData: object | null;
-  jsonString: string;
-  fileName: string;
-  onChange: (newData: object) => void;
-  onJsonStringChange: (newJsonString: string) => void;
-  onFileNameChange: (newFileName: string) => void;
-  onSave?: (data: object, filename: string) => void;
-}
-
-export interface VisualEditorProps {
-  lottieData: object | null;
-  onChange: (newData: object) => void;
+  stopIndex?: number; // gradient stop index within the flat stop array
 }

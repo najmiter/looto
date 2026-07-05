@@ -60,7 +60,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ animation, layerColors, selec
                   : 'border-transparent hover:border-gray-200 hover:bg-gray-50 dark:hover:border-dark-500 dark:hover:bg-dark-700/60'
               }`}>
               <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs ${
+                className={`flex size-7 shrink-0 items-center justify-center rounded-lg text-xs ${
                   isSelected
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-500 dark:bg-dark-700 dark:text-dark-200'
@@ -81,12 +81,12 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ animation, layerColors, selec
                   {colors.slice(0, 3).map((c, i) => (
                     <span
                       key={i}
-                      className="h-4 w-4 rounded-full border-2 border-white shadow-sm dark:border-dark-800"
+                      className="size-4 rounded-full border-2 border-white shadow-sm dark:border-dark-800"
                       style={{ backgroundColor: normalizedToHex(c.value) }}
                     />
                   ))}
                   {colors.length > 3 && (
-                    <span className="flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[8px] font-bold text-gray-600 shadow-sm dark:border-dark-800 dark:bg-dark-600 dark:text-dark-100">
+                    <span className="flex size-4 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-[8px] font-bold text-gray-600 shadow-sm dark:border-dark-800 dark:bg-dark-600 dark:text-dark-100">
                       +{colors.length - 3}
                     </span>
                   )}

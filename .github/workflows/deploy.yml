@@ -42,6 +42,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # the deploy itself consistently succeeds but the status poll sometimes
+      # reports failure while GitHub's API converges — poll slower and
+      # tolerate more errors before giving up
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          error_count: 30
+          reporting_interval: 10000
+          timeout: 900000
